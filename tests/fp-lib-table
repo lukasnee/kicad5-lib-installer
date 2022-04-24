@@ -1,0 +1,4 @@
+(fp_lib_table
+  (lib (name battery)(type KiCad)(uri C:/Users/Lukas/dev/libs/kicad-footprints-5.1.10/Battery.pretty)(options "")(descr ""))
+  (lib (name capacitor)(type KiCad)(uri C:/Users/Lukas/dev/libs/kicad-footprints-5.1.10/Capacitor_SMD.pretty)(options "")(descr ""))
+)
