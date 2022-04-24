@@ -5,8 +5,11 @@
 import os
 import sys
 
+from pathlib import Path
+
 class bcolors:
     HEADER = '\033[95m'
+    BLUE = '\033[94m'
     OKBLUE = '\033[94m'
     OKCYAN = '\033[96m'
     OKGREEN = '\033[92m'
@@ -14,38 +17,75 @@ class bcolors:
     FAIL = '\033[91m'
     ENDC = '\033[0m'
     BOLD = '\033[1m'
+    WHITE = '\033[1m'
     UNDERLINE = '\033[4m'
-    
-# print("This is the name of the script: ", sys.argv[0])
-# print("Number of arguments: ", len(sys.argv))
-# print("The arguments are: " , str(sys.argv))
 
+def printc(bcolor, text, end='\n'):
+    print(bcolor + text + bcolors.ENDC, end=end)
+    
 def system(cmd):
-    print(cmd)
+    printc(bcolors.OKCYAN, cmd)
     return (0 == os.system(cmd))
 
-def print_colored(bcolor, text):
-    print(bcolor + text + bcolors.ENDC)
-    
+def sys_exit_error(text = ""):
+    sys.exit(bcolors.FAIL + "error: " + text + bcolors.ENDC)
+
+def cd(newdir):
+    prevdir = os.getcwd()
+    os.chdir(newdir)
+    try:
+        yield
+    finally:
+        os.chdir(prevdir)
+        
+class Lib():
+    def __init__(self, dir, listfn):
+        self.dir = dir
+        self.listfn = listfn
+
+# CONFIG #######################################################################
+
+libs = [
+    Lib("kicad-footprints", "fp-lib-table"),
+    Lib("kicad-symbols", "sym-lib-table"),
+    # Lib("kicad-packages3D", ""),
+    # Lib("kicad-templates", "")
+]
+
 # SCRIPT #######################################################################
-    
-    fn = sys.argv[1]
-if os.path.exists(fn):
-    print os.path.basename(fn)
-    # file exists
+kiCadDir = str(Path.home()) + "\AppData\Roaming\kicad"
 
-kicad_lib_dirs = ["kicad-footprints", "kicad-packages3D", "kicad-symbols", "kicad-templates"]
+try:
+    if not system("git submodule update --init --recursive"):
+        sys_exit_error()
 
-if not system("git submodule update --init --recursive"):
-    sys.exit()
+    for lib in libs:
+        prevdir = os.getcwd()
+        os.chdir(lib.dir)
+        printc(bcolors.OKBLUE, "opening ", end ="")
+        printc(bcolors.WHITE, os.getcwd())
+        if not system("git checkout master"):
+            sys_exit_error()
+        if not system("git clean -fdx"):
+            sys_exit_error()
+        else:
+            with open(lib.listfn, 'r') as srcf:
+                printc(bcolors.OKBLUE, os.path.realpath(srcf.name))
+                # print(srcf.read())
+                srcfLines = srcf.readlines()
+                for srcfLinesl in srcfLines:
+                    pass
+                with open(kiCadDir + "\\" + lib.listfn) as dstf:
+                    printc(bcolors.OKBLUE, os.path.realpath(dstf.name))
+                    # print(dstf.read())
+                    dstfLines = dstf.readlines()
+                    for dstfLinesl in dstfLines:
+                        pass
+                    
+        os.chdir(prevdir)
 
-print()
-for lib_dir in kicad_lib_dirs:
-    if not system("cd %s" % lib_dir):
-        sys.exit()
-    elif not system("git checkout master"):
-        sys.exit()
-    elif not system("cd .."):
-        sys.exit()
+except Exception as e: 
+    print(e)
+    sys_exit_error()
 
-print_colored(bcolors.OKGREEN, 'great success!')
+printc(bcolors.OKGREEN, 'great success!')
