@@ -3,8 +3,10 @@ from pathlib import Path
 import re
 import sys
 import os
+import colorama
+from colorama import Fore
 
-test = False
+
 # HELPERS ######################################################################
 
 
@@ -22,17 +24,17 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-def printc(bcolor, text, end='\n'):
-    print(bcolor + text + bcolors.ENDC, end=end)
+def printc(color, text, end='\n'):
+    print(color + text + Fore.RESET, end=end)
 
 
 def system(cmd):
-    printc(bcolors.OKCYAN, cmd)
+    printc(Fore.CYAN, cmd)
     return (0 == os.system(cmd))
 
 
 def sys_exit_error(text=""):
-    sys.exit(bcolors.FAIL + "error: " + text + bcolors.ENDC)
+    sys.exit(Fore.RED + "error: " + text + Fore.RESET)
 
 
 def cd(newdir):
@@ -45,9 +47,10 @@ def cd(newdir):
 
 
 class Lib():
-    def __init__(self, dir, listfn):
+    def __init__(self, dir, listfn, pathVar):
         self.dir = dir
         self.listfn = listfn
+        self.pathVar = pathVar
 
 
 def return_first_match(regex, text):
@@ -61,11 +64,14 @@ def return_first_match(regex, text):
 
 
 libs = [
-    Lib("kicad-footprints", "fp-lib-table"),
-    Lib("kicad-symbols", "sym-lib-table"),
+    Lib("kicad-footprints", "fp-lib-table", r'${KICAD6_FOOTPRINT_DIR}'),
+    Lib("kicad-symbols", "sym-lib-table", r'${KICAD6_SYMBOL_DIR}'),
     # Lib("kicad-packages3D", ""),
     # Lib("kicad-templates", "")
 ]
+
+reName = r'\(name "?(\w+)"?\)*'
+test = False
 
 # SCRIPT #######################################################################
 kiCadDir = str(Path.home()) + "\AppData\Roaming\kicad"
@@ -79,32 +85,46 @@ try:
     for lib in libs:
         prevdir = os.getcwd()
         os.chdir(lib.dir)
-        printc(bcolors.YELLOW, "updating %s manager from" % lib.dir, end=" ")
-        printc(bcolors.WHITE, os.getcwd())
+        printc(Fore.YELLOW, "updating %s manager from" % lib.dir, end=" ")
+        printc(Fore.WHITE, os.getcwd())
+        if not system("git fetch -all"):
+            sys_exit_error()
         if not system("git checkout master"):
             sys_exit_error()
         if not system("git clean -fdx"):
             sys_exit_error()
+        if not system("git fetch"):
+            sys_exit_error()
+        if not system("git pull"):
+            sys_exit_error()
         else:
             with open(lib.listfn, 'r') as srcf:
-                printc(bcolors.YELLOW, "src:", end=" ")
-                printc(bcolors.WHITE, os.path.realpath(srcf.name))
-                srclines = srcf.readlines()
+                srcPath = os.path.realpath(srcf.name)
+                libPath = os.path.split(srcPath)[0] + '\\'
+                printc(Fore.YELLOW, "src:", end=" ")
+                printc(Fore.WHITE, srcPath)
                 dstPath = kiCadDir + "\\" + lib.listfn
                 with open(dstPath, 'r') as dstf:
-                    printc(bcolors.YELLOW, "dst:", end=" ")
-                    printc(bcolors.WHITE, os.path.realpath(dstf.name))
+                    printc(Fore.YELLOW, "dst:", end=" ")
+                    printc(Fore.WHITE, os.path.realpath(dstf.name))
                     dstlines = dstf.readlines()
-                    for srcline in srclines:
-                        regexSrc = '\(name "?(\w+)"?\)*'
-                        libName = return_first_match(regexSrc, srcline)
-                        if libName:
-                            regexDst = '\(name "?(' + libName + ')"?\)*'
-                            isAlreadyPresent = False
+                    for srcline in srcf.readlines():
+                        libName = return_first_match(reName, srcline)
+                        if libName != "":
+                            libNotPresentInList = True
+                            dstLineNum = 0
                             for dstline in dstlines:
-                                if bool(re.search(regexDst, dstline)):
-                                    isAlreadyPresent = True
-                            if not isAlreadyPresent:
+                                if libName == return_first_match(reName, dstline):
+                                    srcline = srcline.replace(
+                                        lib.pathVar, libPath)
+                                    # update same
+                                    dstlines[dstLineNum] = srcline
+                                    libNotPresentInList = False
+                                    break
+                                dstLineNum += 1
+                            if libNotPresentInList:
+                                srcline = srcline.replace(lib.pathVar, libPath)
+                                # insert in top of list
                                 dstlines.insert(1, srcline)
                     with open(dstPath, "w") as f:
                         dstlines = "".join(dstlines)
@@ -115,4 +135,4 @@ except Exception as e:
     print(e)
     sys_exit_error()
 
-printc(bcolors.OKGREEN, 'great success!')
+printc(Fore.GREEN, 'great success!')
