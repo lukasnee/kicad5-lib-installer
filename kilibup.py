@@ -64,7 +64,7 @@ class Lib():
 
 
 parser = argparse.ArgumentParser(
-    description='kiCad v5 official library unofficial installer', epilog="Example: python kilibup.py --sym ./tests/sym-lib-table --fp ./tests/fp-lib-table")
+    description='kiCad v5 official library unofficial installer', epilog="example test: python kilibup.py --sym ./tests/sym-lib-table --fp ./tests/fp-lib-table")
 parser.add_argument('--sym', type=str,
                     metavar="sym-lib-table", help='path to sym-lib-table (KiCad schematic symbols library manager file)')
 parser.add_argument('--fp', type=str,
