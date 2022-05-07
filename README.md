@@ -1,6 +1,6 @@
-# KiCad v5 official libraries updater
+# Kilibup
 
-Downloads and links all [official KiCad libraries](https://gitlab.com/kicad/libraries) to your local KiCad installation (library configuration files `*-lib-table`). ATM only the schematic symbol and PCB footprint libararies installation are supported.
+Script tool that downloads and links all [official KiCad libraries](https://gitlab.com/kicad/libraries) to your local KiCad installation (library configuration files `*-lib-table`). ATM only the schematic symbol and PCB footprint libararies installation are supported.
 
 ## Motivation
 I found it very tedious to do this manually using library manager GUI and I couldn't find any help on the internet to speed up this process. So I made this tool. Cheers! 
@@ -15,7 +15,7 @@ PS: It's my very first python application. lol.
 
 # Usage
 
-```shell
+```
 python kilibup.py -h
 usage: kilibup.py [-h] [--sym sym-lib-table] [--fp fp-lib-table] [-s]
 
@@ -33,6 +33,6 @@ example test: python kilibup.py --sym ./tests/sym-lib-table --fp ./tests/fp-lib-
 ## Example
 
 Windows:
-```shell
+```
 python .\kilibup.py --sym C:\Users\Lukas\AppData\Roaming\kicad\sym-lib-table --fp C:\Users\Lukas\AppData\Roaming\kicad\fp-lib-table
 ```

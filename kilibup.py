@@ -1,4 +1,3 @@
-# kicad 5.x library installer from official repositories
 from pathlib import Path
 import re
 import sys
