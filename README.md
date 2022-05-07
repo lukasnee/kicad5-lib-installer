@@ -1,0 +1,39 @@
+# KiCad v5 Official Libraries Unofficial Installer
+
+I found it very tedious to update libraries manually in KiCad library manager GUI and I couldn't find this tool on the internet so I made it myself. Cheers!
+
+# Dependencies
+
+- [KiCad](https://www.kicad.org/) v5
+- [git](https://git-scm.com/)
+- [python](https://www.python.org/downloads/) v3.8.10 or higher
+
+# Usage
+
+```shell
+python .\kilibup.py -h
+usage: kilibup.py [-h] [--sym sym-lib-table] [--fp fp-lib-table] [-s]
+
+kiCad v5 official library unofficial installer
+
+optional arguments:
+  -h, --help           show this help message and exit
+  --sym sym-lib-table  path to sym-lib-table (KiCad schematic symbols library manager file)
+  --fp fp-lib-table    path to fp-lib-table (KiCad PCB footprint library manager file)
+  -s                   do not update libraries from remote repository. use local.
+```
+
+## Example
+
+On windows:
+```shell
+python .\kilibup.py --sym C:\Users\Lukas\AppData\Roaming\kicad\sym-lib-table --fp C:\Users\Lukas\AppData\Roaming\kicad\fp-lib-table
+```
+
+## Test
+
+you can test the installer safely by executing:
+```shell
+git restore .\tests\*
+python .\updateKiCadLibraries.py
+```
