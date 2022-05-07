@@ -6,11 +6,13 @@ import os
 import argparse
 import shutil
 
+
 class Fore:
     RESET = '\x1b[0m'
     WHITE = '\x1b[37m'
     GREEN = '\x1b[92m'
     YELLOW = '\x1b[93m'
+
 
 def print_colored(color, text, end='\n'):
     print(color + text + Fore.RESET, end=end)
@@ -62,15 +64,14 @@ class Lib():
 
 
 parser = argparse.ArgumentParser(
-    description='kiCad v5 official library unofficial installer')
+    description='kiCad v5 official library unofficial installer', epilog="Example: python kilibup.py --sym ./tests/sym-lib-table --fp ./tests/fp-lib-table")
 parser.add_argument('--sym', type=str,
-                    default="tests/sym-lib-table", metavar="sym-lib-table", help='path to sym-lib-table (KiCad schematic symbols library manager file)')
+                    metavar="sym-lib-table", help='path to sym-lib-table (KiCad schematic symbols library manager file)')
 parser.add_argument('--fp', type=str,
-                    default="tests/fp-lib-table", metavar="fp-lib-table", help='path to fp-lib-table (KiCad PCB footprint library manager file)')
+                    metavar="fp-lib-table", help='path to fp-lib-table (KiCad PCB footprint library manager file)')
 parser.add_argument('-s', action='store_true',
                     help='do not update libraries from remote repository. use local.')
 args = parser.parse_args()
-
 
 libs = [
     Lib("PCB footprints", "kicad-footprints/fp-lib-table",
@@ -81,61 +82,72 @@ libs = [
     # TODO:kicad-templates
 ]
 
-if not args.s:
-    system_call("git submodule update --init --recursive")
+libs_updated_cnt = 0
 
 for lib in libs:
-    if not args.s:
-        lib.git_reset_latest_master()
 
-    print_colored(Fore.YELLOW, "updating {lib_name} library manager".format(
-        lib_name=os.path.basename(lib.name)))
+    if lib.dst_path:
 
-    backup_path = lib.src_path + ".bak"
-    print("backing up {backup_path}".format(backup_path=backup_path))
-    shutil.copyfile(lib.src_path, backup_path)
-    with open(lib.src_path, 'r') as f:
-        print_colored(Fore.YELLOW, "src_file:", end=" ")
-        print_colored(Fore.WHITE, lib.src_path)
-        src_lines = f.readlines()
+        if not libs_updated_cnt:  # first time once
+            system_call("git submodule update --init --recursive")
 
-    backup_path = lib.dst_path + ".bak"
-    print("backing up {backup_path}".format(backup_path=backup_path))
-    shutil.copyfile(lib.dst_path, lib.dst_path + ".bak")
-    with open(lib.dst_path, 'r') as f:
-        print_colored(Fore.YELLOW, "dst_file:", end=" ")
-        print_colored(Fore.WHITE, lib.dst_path)
-        dst_lines = f.readlines()
+        if not args.s:
+            lib.git_reset_latest_master()
 
-    updated_cnt = 0
-    added_cnt = 0
+        print_colored(Fore.YELLOW, "updating {lib_name} library manager".format(
+            lib_name=os.path.basename(lib.name)))
 
-    for src_line in src_lines:
-        re_name = r'\(\s*name\s+"?(?P<name>[\w\-\.\+]+)"?\s*\)'
-        lib_name = return_first_match(re_name, src_line)
-        if lib_name:
-            new_line = src_line.replace(
-                lib.dir_regex, (os.path.realpath(os.path.dirname(lib.src_path)) + '/').replace('\\', '/'))
-            lib_already_present_in_dst = False
-            dst_line_num = 0
-            for dst_line in dst_lines:
-                if lib_name == return_first_match(re_name, dst_line):
-                    if(new_line == dst_line):
-                        print_colored(Fore.WHITE, lib_name, end=' ')
-                    else:
-                        print_colored(Fore.YELLOW, lib_name, end=' ')
-                        dst_lines[dst_line_num] = new_line
-                        updated_cnt += 1
-                    lib_already_present_in_dst = True
-                    break
-                dst_line_num += 1
-            if not lib_already_present_in_dst:
-                print_colored(Fore.GREEN, lib_name, end=' ')
-                dst_lines.insert(1, new_line)
-                added_cnt += 1
-    with open(lib.dst_path, "w") as f:
-        dst_lines = "".join(dst_lines)
-        f.write(dst_lines)
-    print("\n{added_cnt} libraries added and {updated_cnt} libraries updated".format(
-        added_cnt=added_cnt, updated_cnt=updated_cnt))
+        backup_path = lib.src_path + ".bak"
+        print("backing up {backup_path}".format(backup_path=backup_path))
+        shutil.copyfile(lib.src_path, backup_path)
+        with open(lib.src_path, 'r') as f:
+            print_colored(Fore.YELLOW, "src_file:", end=" ")
+            print_colored(Fore.WHITE, lib.src_path)
+            src_lines = f.readlines()
+
+        backup_path = lib.dst_path + ".bak"
+        print("backing up {backup_path}".format(backup_path=backup_path))
+        shutil.copyfile(lib.dst_path, lib.dst_path + ".bak")
+        with open(lib.dst_path, 'r') as f:
+            print_colored(Fore.YELLOW, "dst_file:", end=" ")
+            print_colored(Fore.WHITE, lib.dst_path)
+            dst_lines = f.readlines()
+
+        updated_cnt = 0
+        added_cnt = 0
+
+        for src_line in src_lines:
+            re_name = r'\(\s*name\s+"?(?P<name>[\w\-\.\+]+)"?\s*\)'
+            lib_name = return_first_match(re_name, src_line)
+            if lib_name:
+                new_line = src_line.replace(
+                    lib.dir_regex, (os.path.realpath(os.path.dirname(lib.src_path)) + '/').replace('\\', '/'))
+                lib_already_present_in_dst = False
+                dst_line_num = 0
+                for dst_line in dst_lines:
+                    if lib_name == return_first_match(re_name, dst_line):
+                        if(new_line == dst_line):
+                            print_colored(Fore.WHITE, lib_name, end=' ')
+                        else:
+                            print_colored(Fore.YELLOW, lib_name, end=' ')
+                            dst_lines[dst_line_num] = new_line
+                            updated_cnt += 1
+                        lib_already_present_in_dst = True
+                        break
+                    dst_line_num += 1
+                if not lib_already_present_in_dst:
+                    print_colored(Fore.GREEN, lib_name, end=' ')
+                    dst_lines.insert(1, new_line)
+                    added_cnt += 1
+        with open(lib.dst_path, "w") as f:
+            dst_lines = "".join(dst_lines)
+            f.write(dst_lines)
+        print("\n{added_cnt} libraries added and {updated_cnt} libraries updated".format(
+            added_cnt=added_cnt, updated_cnt=updated_cnt))
+
+        libs_updated_cnt += 1
+
+if not libs_updated_cnt:
+    print("nothing to update. Please provide destination map file(s) - see help with '-h'")
+else:
     print('all done!')
