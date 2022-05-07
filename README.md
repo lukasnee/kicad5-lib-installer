@@ -1,3 +1,5 @@
+![Keep your hands clean!](docs/banner.png)
+
 # Kilibup
 
 Script tool that downloads and links all [official KiCad libraries](https://gitlab.com/kicad/libraries) to your local KiCad v6 or v5 installation (library configuration files `*-lib-table`). ATM only the schematic symbol and PCB footprint libararies installation are supported.
